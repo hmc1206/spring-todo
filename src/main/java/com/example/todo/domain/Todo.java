@@ -1,9 +1,6 @@
 package com.example.todo.domain;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,11 +19,16 @@ public class Todo {
     private LocalDate date;
     private boolean completed;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id") //여기가 FK 컬럼명
+    private User user;
+
     @Builder
-    public Todo(String content, LocalDate date) {
+    public Todo(String content, LocalDate date, User user) {
         this.content = content;
         this.date = date;
         this.completed = false;
+        this.user = user;
     }
 
     public void updateStatus(boolean completed){

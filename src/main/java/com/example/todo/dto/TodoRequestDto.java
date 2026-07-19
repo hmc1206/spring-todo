@@ -11,4 +11,5 @@ import java.time.LocalDate;
 public class TodoRequestDto {
     private String content;
     private LocalDate date;
+    private Long userId;
 }
