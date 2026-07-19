@@ -39,4 +39,10 @@ public class TodoController {
     public void deleteTodo(@PathVariable Long id){
         todoService.delete(id);
     }
+
+    @GetMapping("/user/{userId}")
+    public List<TodoResponseDto> getTodoByUser(@PathVariable Long userId){
+        //주소창의 {userId} 자리에 들어오는 숫자를 @PathVariable로 받아옴
+        return todoService.findByUserId(userId);
+    }
 }

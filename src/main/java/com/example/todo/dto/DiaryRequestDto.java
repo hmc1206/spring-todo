@@ -13,4 +13,5 @@ public class DiaryRequestDto {
     private String content;
     private LocalDate date;
     private String emotion;
+    private Long userId;
 }

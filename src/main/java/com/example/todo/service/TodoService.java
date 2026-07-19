@@ -44,6 +44,12 @@ public class TodoService {
                 .toList();
     }
 
+    public List<TodoResponseDto> findByUserId(Long userId){
+        return todoRepository.findByUserId(userId).stream()
+                .map(TodoResponseDto::new)
+                .toList();
+    }
+
     @Transactional
     public void updateStatus(Long id, boolean completed){
         Todo todo = todoRepository.findById(id).orElseThrow();

@@ -1,9 +1,6 @@
 package com.example.todo.domain;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,12 +20,17 @@ public class Diary {
     private LocalDate date;
     private String emotion;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
     @Builder
-    public Diary(String title, String content, LocalDate date, String emotion){
+    public Diary(String title, String content, LocalDate date, String emotion, User user){
         this.title = title;
         this.content = content;
         this.date = date;
         this.emotion = emotion;
+        this.user = user;
     }
 
     public void update(String title, String content, String emotion){
