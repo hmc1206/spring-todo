@@ -21,4 +21,22 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+    public org.springframework.http.ResponseEntity<com.example.todo.dto.ErrorResponse> handleValidationException(
+            org.springframework.web.bind.MethodArgumentNotValidException e) {
+
+        // 💡 여러 에러 중 첫 번째로 걸린 에러 메시지를 꺼내옵니다.
+        // 우리가 DTO에 적었던 "할 일 내용은 비어있을 수 없습니다."라는 문장이 여기에 담깁니다.
+        String errorMessage = e.getBindingResult().getAllErrors().get(0).getDefaultMessage();
+
+        // 400(Bad Request) 번호와 예쁜 에러 메시지를 가방에 담습니다.
+        com.example.todo.dto.ErrorResponse errorResponse = new com.example.todo.dto.ErrorResponse(
+                org.springframework.http.HttpStatus.BAD_REQUEST.value(),
+                errorMessage
+        );
+
+        return new org.springframework.http.ResponseEntity<>(errorResponse, org.springframework.http.HttpStatus.BAD_REQUEST);
+    }
+
 }

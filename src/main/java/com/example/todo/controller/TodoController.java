@@ -3,6 +3,7 @@ package com.example.todo.controller;
 import com.example.todo.dto.TodoRequestDto;
 import com.example.todo.dto.TodoResponseDto;
 import com.example.todo.service.TodoService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +17,7 @@ public class TodoController {
     private final TodoService todoService;
 
     @PostMapping
-    public Long createTodo(@RequestBody TodoRequestDto dto){
+    public Long createTodo(@Valid @RequestBody TodoRequestDto dto){
         return todoService.save(dto);
     }
 

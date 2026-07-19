@@ -18,7 +18,8 @@ public class Diary {
     private String title;
     private String content;
     private LocalDate date;
-    private String emotion;
+    //기본값 입력
+    private String emotion = "Happy";
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -29,7 +30,9 @@ public class Diary {
         this.title = title;
         this.content = content;
         this.date = date;
-        this.emotion = emotion;
+        if(emotion != null && !emotion.trim().isEmpty()) {
+            this.emotion = emotion;
+        }
         this.user = user;
     }
 

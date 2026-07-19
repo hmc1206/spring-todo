@@ -3,6 +3,7 @@ package com.example.todo.controller;
 import com.example.todo.dto.DiaryRequestDto;
 import com.example.todo.dto.DiaryResponseDto;
 import com.example.todo.service.DiaryService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +17,7 @@ public class DiaryController {
     private final DiaryService diaryService;
 
     @PostMapping
-    public Long createDiary(@RequestBody DiaryRequestDto dto) { return diaryService.save(dto);}
+    public Long createDiary(@Valid @RequestBody DiaryRequestDto dto) { return diaryService.save(dto);}
 
     @GetMapping
     public List<DiaryResponseDto> getAllDiary() {
