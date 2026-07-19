@@ -40,6 +40,29 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
+	// 1. Querydsl 의존성 추가 (jakarta 패키지 필수)
+	implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+	annotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"
+	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+}
+
+// 2. QueryDSL QClass 생성 경로 정의 (src/main/generated로 통일)
+def querydslSrcDir = 'src/main/generated'
+
+sourceSets {
+	main.java.srcDirs += [ querydslSrcDir ]
+}
+
+// 빌드(컴파일) 시 해당 경로에 QClass 생성
+tasks.withType(JavaCompile).configureEach {
+	options.getGeneratedSourceOutputDirectory().set(file(querydslSrcDir))
+}
+
+// 3. gradle clean 시 생성된 QClass 디렉토리도 함께 삭제
+clean {
+	delete file(querydslSrcDir)
 }
 
 tasks.named('test') {
