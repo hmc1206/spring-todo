@@ -17,6 +17,7 @@ public class DiaryRepositoryImpl implements DiaryRepositoryCustom{
 
     @Override
     public List<Diary> searchDiaries(Long userId, LocalDate date, String keyword) {
+        return queryFactory
                 .selectFrom(diary)
                 .where(
                         diary.user.id.eq(userId),
