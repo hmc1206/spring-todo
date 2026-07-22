@@ -28,12 +28,17 @@ export const signup = async (
 };
 
 export const login = async (
-    data: LoginRequest,
+  data: LoginRequest,
 ): Promise<string> => {
-    const responst = await apiClient.post<string>(
-        "/api/users/login",
-        data,
-    );
+  const response = await apiClient.post<string>(
+    "/api/users/login",
+    data,
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    },
+  );
 
-    return responst.data;
-}
+  return response.data;
+};

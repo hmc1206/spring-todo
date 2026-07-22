@@ -1,5 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link ,useNavigate} from "react-router-dom";
+import { login } from "../../api/userApi";
 
 interface LoginFormData {
   loginId: string;
@@ -7,6 +8,8 @@ interface LoginFormData {
 }
 
 const LoginForm = () => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState<LoginFormData>({
     loginId: "",
     password: "",
@@ -21,8 +24,27 @@ const LoginForm = () => {
     }));
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    try {
+      //로그인 api 호출
+      const token = await login(formData);
+
+      console.log("login success")
+      console.log("JWT : ", token);
+
+      localStorage.setItem(
+        "accessToken",
+        token,
+      );
+      alert("login succeed!");
+
+      //todo 페이지로 이동
+      navigate("/");
+    } catch (error) {
+      console.error("로그인 실패 : ", error);
+    }
 
     console.log("로그인 요청 데이터:", formData);
   };
