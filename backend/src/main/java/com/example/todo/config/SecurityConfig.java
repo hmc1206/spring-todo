@@ -25,6 +25,24 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                //브라우저의 CORS 검문을 통과시키기 위한 허용 설정
+                .cors(cors -> cors.configurationSource(request -> {
+                    var config = new org.springframework.web.cors.CorsConfiguration();
+
+                    // 1. 데이터 요청을 허락할 프론트엔드 주소(Vite 리액트 기본 주소)를 정확히 지정합니다.
+                    config.setAllowedOrigins(java.util.List.of("http://localhost:5173"));
+
+                    // 2. 프론트엔드가 보낼 수 있는 HTTP 메서드(CRUD) 종류를 허용합니다.
+                    config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+
+                    // 3. 어떤 헤더(예: Content-Type, Authorization 등)를 실어 보내든 모두 허용합니다.
+                    config.setAllowedHeaders(java.util.List.of("*"));
+
+                    // 4. 아주 중요! 쿠키나 JWT 인증 헤더(Authorization)를 통신에 주고받을 수 있도록 허용합니다.
+                    config.setAllowCredentials(true);
+
+                    return config;
+                }))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
