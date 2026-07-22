@@ -3,7 +3,8 @@ import {
   type ChangeEvent,
   type FormEvent,
 } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { signup } from "../../api/userApi";
 
 interface SignupFormData {
   loginId: string;
@@ -12,6 +13,8 @@ interface SignupFormData {
 }
 
 const SignupForm = () => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState<SignupFormData>({
     loginId: "",
     password: "",
@@ -29,10 +32,18 @@ const SignupForm = () => {
     }));
   };
 
-  const handleSubmit = (
+  const handleSubmit = async(
     e: FormEvent<HTMLFormElement>,
   ) => {
     e.preventDefault();
+
+    try {
+      const userId = await signup(formData);
+      console.log("회원가입 성공:", userId);
+      navigate("/login");
+    }catch(error){
+      console.error("회원가입 실패 : ", error,);
+    }
 
     console.log(
       "회원가입 요청 데이터:",
