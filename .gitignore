@@ -1,40 +1,25 @@
-HELP.md
-.gradle
-build/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
+# ==========================================
+# 1. Backend (Spring Boot) 가림막
+# ==========================================
+backend/.gradle/
+backend/build/
+backend/out/
+backend/.idea/
+backend/src/main/generated/
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
+# ==========================================
+# 2. Frontend (React / Vite) 가림막
+# ==========================================
+frontend/node_modules/
+frontend/dist/
+frontend/.local
+frontend/.env.local
 
-### IntelliJ IDEA ###
-.idea
-*.iws
+# ==========================================
+# 3. OS 및 IDE 공통 가림막
+# ==========================================
+.DS_Store
+Thumbs.db
 *.iml
-*.ipr
-out/
-!**/src/main/**/out/
-!**/src/test/**/out/
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-
-### VS Code ###
+.idea/
 .vscode/
-
-
-/src/main/generated/
