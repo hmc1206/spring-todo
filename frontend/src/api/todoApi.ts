@@ -7,9 +7,26 @@ export interface TodoResponse {
     completed: boolean;
 }
 
+export interface TodoCreateRequest {
+    content : string;
+    date: string;
+    userId: number;
+}
+
 export const getMyTodos = async () : Promise<TodoResponse[]> => {
     const response = await apiClient.get<TodoResponse[]>(
         "/api/todos/my",
+    );
+
+    return response.data;
+}
+
+export const createTodo = async (
+    data: TodoCreateRequest,
+): Promise<number> => {
+    const response = await apiClient.post<number>(
+        "/api/todos",
+        data,
     );
 
     return response.data;
