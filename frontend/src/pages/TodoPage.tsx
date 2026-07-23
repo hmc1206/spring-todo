@@ -2,6 +2,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import {
     createTodo,
     getMyTodos,
+    updateTodoCompleted,
+    deleteTodo,
     type TodoResponse,
 } from "../api/todoApi";
 
@@ -28,6 +30,40 @@ const TodoPage = () => {
       setLoading(false);
     }
   };
+
+  const handleToggleCompleted = async (
+    todo: TodoResponse,
+    ) => {
+    try {
+        await updateTodoCompleted(todo.id,!todo.completed,);
+
+        await fetchTodos();
+    } catch (error) {
+        console.error("Todo 완료 상태 변경 실패:",error,);
+
+        alert("Todo 상태 변경에 실패했습니다.",);
+    }
+  };
+
+  const handleDeleteTodo = async (
+    id: number,
+    ) => {
+        const confirmed = window.confirm(
+            "정말 삭제하시겠습니까?",
+        );
+
+        if (!confirmed) {return;}
+
+        try {
+            await deleteTodo(id);
+            await fetchTodos();
+        } 
+        catch (error) {
+            console.error("Todo 삭제 실패:",error,);
+
+            alert("Todo 삭제에 실패했습니다.",);
+        }
+    };
 
   useEffect(() => {
     fetchTodos();
@@ -115,19 +151,27 @@ const TodoPage = () => {
         <p>등록된 Todo가 없습니다.</p>
       ) : (
         <ul>
-          {todos.map((todo) => (
-            <li key={todo.id}>
-              <p>{todo.content}</p>
+            {todos.map((todo) => (
+                <li key={todo.id}>
+                <input
+                    type="checkbox"
+                    checked={todo.completed}
+                    onChange={() =>
+                    handleToggleCompleted(todo)
+                    }
+                />
 
-              <p>{todo.date}</p>
+                <span>{todo.content}</span>
 
-              <p>
-                {todo.completed
-                  ? "완료"
-                  : "미완료"}
-              </p>
-            </li>
-          ))}
+                <span>{todo.date}</span>
+
+                <span>{todo.completed ? "완료" : "미완료"}</span>
+
+                <button type="button" onClick={() => handleDeleteTodo(todo.id)}>
+                    삭제
+                </button>
+                </li>
+            ))}
         </ul>
       )}
     </div>

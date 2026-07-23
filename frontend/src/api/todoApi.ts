@@ -31,3 +31,28 @@ export const createTodo = async (
 
     return response.data;
 }
+
+//Todo 완료 상태 변경
+export const updateTodoCompleted = async (
+    id: number,
+    completed: boolean,
+): Promise<void> => {
+    await apiClient.patch(
+        `/api/todos/${id}`,
+        null,
+        {
+            params: {
+                completed,
+            },
+        },
+    );
+};
+
+//Todo 삭제
+export const deleteTodo = async (
+    id: number,
+): Promise<void> => {
+    await apiClient.delete(
+        `/api/todos/${id}`,
+    );
+};
