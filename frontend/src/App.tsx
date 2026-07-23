@@ -2,6 +2,7 @@ import { Link, Route, Routes } from "react-router-dom";
 
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
+import TodoPage from "./pages/TodoPage";
 
 function App() {
   return (
@@ -23,10 +24,13 @@ function App() {
           path="/login"
           element={<LoginPage />}
         />
-
         <Route
           path="/signup"
           element={<SignupPage />}
+        />
+        <Route
+          path="/todos"
+          element={<TodoPage />}
         />
       </Routes>
     </>

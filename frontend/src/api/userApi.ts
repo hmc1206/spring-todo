@@ -17,11 +17,6 @@ export const signup = async (
   const response = await apiClient.post<number>(
     "/api/users/signup",
     data,
-    {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    },
   );
 
   return response.data;
@@ -33,11 +28,6 @@ export const login = async (
   const response = await apiClient.post<string>(
     "/api/users/login",
     data,
-    {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    },
   );
 
   return response.data;
