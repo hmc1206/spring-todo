@@ -6,53 +6,45 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-@Configuration      //이 클래스는 스프링의 환경설정 파일임을 선언함
-@EnableWebSecurity  //스프링 시큐리티를 활성화하고 내 커스텀 설정을 적용하겠다는 뜻
+@Configuration
+@EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtTokenProvider jwtTokenProvider; // 💡 토큰 무기 주입
+    private final JwtTokenProvider jwtTokenProvider;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+    // 💡 [피드백] 이제 소셜 로그인 단일 체계이므로 패스워드를 암호화하던
+    // BCryptPasswordEncoder 빈(Bean)은 필요가 없어 완전히 제거했습니다. 코드가 더욱 깔끔해집니다.
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                //브라우저의 CORS 검문을 통과시키기 위한 허용 설정
+                // 💡 1. [CORS 설정 정밀 조율] 리액트(5173 포트)와의 안전한 풀스택 통신 개방
                 .cors(cors -> cors.configurationSource(request -> {
                     var config = new org.springframework.web.cors.CorsConfiguration();
-
-                    // 1. 데이터 요청을 허락할 프론트엔드 주소(Vite 리액트 기본 주소)를 정확히 지정합니다.
-                    config.setAllowedOrigins(java.util.List.of("http://localhost:5173"));
-
-                    // 2. 프론트엔드가 보낼 수 있는 HTTP 메서드(CRUD) 종류를 허용합니다.
+                    config.setAllowedOrigins(java.util.List.of("http://localhost:5173")); // Vite 리액트 주소 완벽 일치
                     config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-
-                    // 3. 어떤 헤더(예: Content-Type, Authorization 등)를 실어 보내든 모두 허용합니다.
                     config.setAllowedHeaders(java.util.List.of("*"));
-
-                    // 4. 아주 중요! 쿠키나 JWT 인증 헤더(Authorization)를 통신에 주고받을 수 있도록 허용합니다.
-                    config.setAllowCredentials(true);
-
+                    config.setAllowCredentials(true); // JWT 인증 헤더 허용 필수
                     return config;
                 }))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // 💡 2. [인가 정책 업데이트] 구글 인증 전용 주소 문 열어주기
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/users/signup", "/api/users/login", "/error").permitAll()
+                        // 기존 /api/users/** 경로를 폐기하고, 새로 만든 소셜 로그인 주소와 에러 페이지를 프리패스 목록에 등록합니다.
+                        .requestMatchers("/api/users/google", "/error").permitAll()
+                        // 그 외 할 일/다이어리 검색 등 모든 API는 우리가 만든 JwtAuthenticationFilter를 거쳐 인증되어야만 합니다.
                         .anyRequest().authenticated()
                 )
-                // 💡 [핵심 코드 추가!] 시큐리티의 기본 필터(UsernamePasswordAuthenticationFilter)가
-                // 작동하기 직전에, 우리가 만든 커스텀 'JwtAuthenticationFilter'를 먼저 거치도록 셋팅합니다.
+
+                // 💡 3. JWT 검증 필터 위치 세팅
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
-                        org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+                        UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
