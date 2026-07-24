@@ -56,3 +56,19 @@ export const deleteTodo = async (
         `/api/todos/${id}`,
     );
 };
+
+//날짜별 Todo 조회
+export const getTodosByDate = async (
+    date: string
+): Promise<TodoResponse[]> => {
+    const response = await apiClient.get<TodoResponse[]>(
+        "/api/todos/date",
+        {
+            params: {
+                date,
+            },
+        },
+    );
+
+    return response.data;
+}

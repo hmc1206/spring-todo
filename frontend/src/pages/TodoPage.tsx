@@ -4,6 +4,7 @@ import {
     getMyTodos,
     updateTodoCompleted,
     deleteTodo,
+    getTodosByDate,
     type TodoResponse,
 } from "../api/todoApi";
 
@@ -11,6 +12,7 @@ const TodoPage = () => {
   const [todos, setTodos] = useState<TodoResponse[]>([]);
   const [content, setContent] = useState("");
   const [date, setDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
 
 
   const [loading, setLoading] = useState(true);
@@ -63,7 +65,31 @@ const TodoPage = () => {
 
             alert("Todo 삭제에 실패했습니다.",);
         }
-    };
+  };
+
+  const handleSearchByDate = async () => {
+  if (!selectedDate) {
+    alert("조회할 날짜를 선택해주세요.");
+    return;
+  }
+
+  try {
+    const data = await getTodosByDate(
+      selectedDate,
+    );
+
+    setTodos(data);
+  } catch (error) {
+    console.error(
+      "날짜별 Todo 조회 실패:",
+      error,
+    );
+
+    alert(
+      "Todo 조회에 실패했습니다.",
+    );
+  }
+};
 
   useEffect(() => {
     fetchTodos();
@@ -98,11 +124,7 @@ const TodoPage = () => {
 
       await fetchTodos();
     } catch (error) {
-      console.error(
-        "Todo 생성 실패:",
-        error,
-      );
-
+      console.error("Todo 생성 실패:",error,);
       alert("Todo 생성에 실패했습니다.");
     } finally {
       setCreating(false);
@@ -116,6 +138,19 @@ const TodoPage = () => {
   return (
     <div>
       <h1>내 Todo</h1>
+      {/* 날짜별 Todo 조회 */}
+        <div>
+            <h2>날짜별 Todo 조회</h2>
+
+            <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+            />
+
+            <button type="button" onClick={handleSearchByDate}>조회</button>
+            <button type="button" onClick={fetchTodos}>전체 보기</button>
+        </div>
 
       {/* Todo 생성 */}
       <form onSubmit={handleSubmit}>
@@ -136,13 +171,8 @@ const TodoPage = () => {
           }
         />
 
-        <button
-          type="submit"
-          disabled={creating}
-        >
-          {creating
-            ? "추가 중..."
-            : "Todo 추가"}
+        <button type="submit" disabled={creating}>
+          {creating ? "추가 중..." : "Todo 추가"}
         </button>
       </form>
 
