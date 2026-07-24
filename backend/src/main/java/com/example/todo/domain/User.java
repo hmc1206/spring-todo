@@ -14,15 +14,14 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    //구글 이메일 고유 식별자로 사용함
-    @Column(unique = true, nullable = false)
     private String loginId;
-    //비밀번호 X
+    private String password;
     private String nickname;
 
     @Builder
-    public User(String loginId, String nickname){
+    public User(String loginId, String password, String nickname){
         this.loginId = loginId;
+        this.password = password;
         this.nickname = nickname;
     }
 }

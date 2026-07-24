@@ -46,9 +46,6 @@ dependencies {
 	annotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"
 	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
 	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
-
-	// 구글 OAuth2 토큰 검증 라이브러리
-	implementation 'com.google.api-client:google-api-client:2.2.0'
 }
 
 // 2. QueryDSL QClass 생성 경로 정의 (src/main/generated로 통일)
