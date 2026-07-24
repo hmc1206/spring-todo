@@ -3,19 +3,11 @@ package com.example.todo.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -24,123 +16,35 @@ public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
 
-    /**
-     * 비밀번호 암호화
-     */
+    // 💡 [피드백] 이제 소셜 로그인 단일 체계이므로 패스워드를 암호화하던
+    // BCryptPasswordEncoder 빈(Bean)은 필요가 없어 완전히 제거했습니다. 코드가 더욱 깔끔해집니다.
+
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    /**
-     * CORS 설정
-     */
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-
-        CorsConfiguration configuration =
-                new CorsConfiguration();
-
-        // React 프론트엔드 주소
-        configuration.setAllowedOrigins(
-                List.of("http://localhost:5173")
-        );
-
-        // 허용 HTTP 메서드
-        configuration.setAllowedMethods(
-                List.of(
-                        "GET",
-                        "POST",
-                        "PUT",
-                        "PATCH",
-                        "DELETE",
-                        "OPTIONS"
-                )
-        );
-
-        // 모든 요청 헤더 허용
-        configuration.setAllowedHeaders(
-                List.of("*")
-        );
-
-        // Authorization 응답 헤더 노출
-        configuration.setExposedHeaders(
-                List.of("Authorization")
-        );
-
-        // 쿠키 사용 허용
-        configuration.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
-
-        source.registerCorsConfiguration(
-                "/**",
-                configuration
-        );
-
-        return source;
-    }
-
-    /**
-     * Spring Security 설정
-     */
-    @Bean
-    public SecurityFilterChain filterChain(
-            HttpSecurity http
-    ) throws Exception {
-
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // ⭐ CORS 활성화
-                .cors(cors ->
-                        cors.configurationSource(
-                                corsConfigurationSource()
-                        )
+                // 💡 1. [CORS 설정 정밀 조율] 리액트(5173 포트)와의 안전한 풀스택 통신 개방
+                .cors(cors -> cors.configurationSource(request -> {
+                    var config = new org.springframework.web.cors.CorsConfiguration();
+                    config.setAllowedOrigins(java.util.List.of("http://localhost:5173")); // Vite 리액트 주소 완벽 일치
+                    config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+                    config.setAllowedHeaders(java.util.List.of("*"));
+                    config.setAllowCredentials(true); // JWT 인증 헤더 허용 필수
+                    return config;
+                }))
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // 💡 2. [인가 정책 업데이트] 구글 인증 전용 주소 문 열어주기
+                .authorizeHttpRequests(auth -> auth
+                        // 기존 /api/users/** 경로를 폐기하고, 새로 만든 소셜 로그인 주소와 에러 페이지를 프리패스 목록에 등록합니다.
+                        .requestMatchers("/api/users/google", "/error").permitAll()
+                        // 그 외 할 일/다이어리 검색 등 모든 API는 우리가 만든 JwtAuthenticationFilter를 거쳐 인증되어야만 합니다.
+                        .anyRequest().authenticated()
                 )
 
-                // CSRF 비활성화
-                .csrf(csrf ->
-                        csrf.disable()
-                )
-
-                // JWT Stateless 설정
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(
-                                SessionCreationPolicy.STATELESS
-                        )
-                )
-
-                // URL 접근 권한 설정
-                .authorizeHttpRequests(auth ->
-                        auth
-
-                                // CORS Preflight 요청 허용
-                                .requestMatchers(
-                                        HttpMethod.OPTIONS,
-                                        "/**"
-                                )
-                                .permitAll()
-
-                                // 회원가입 / 로그인 허용
-                                .requestMatchers(
-                                        "/api/users/signup",
-                                        "/api/users/login",
-                                        "/error"
-                                )
-                                .permitAll()
-
-                                // 나머지 API는 인증 필요
-                                .anyRequest()
-                                .authenticated()
-                )
-
-                // JWT 인증 필터 등록
-                .addFilterBefore(
-                        new JwtAuthenticationFilter(
-                                jwtTokenProvider
-                        ),
-                        UsernamePasswordAuthenticationFilter.class
-                );
+                // 💡 3. JWT 검증 필터 위치 세팅
+                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
+                        UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
