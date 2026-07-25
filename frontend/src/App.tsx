@@ -1,36 +1,30 @@
-import { Link, Route, Routes } from "react-router-dom";
-
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useState } from "react";
 import LoginPage from "./pages/LoginPage";
-import SignupPage from "./pages/SignupPage";
+import SearchPage from "./pages/SearchPage";
+import MainLayout from "./components/auth/MainLayout";
 
-function App() {
+export default function App() {
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem("token"));
+
   return (
-    <>
-      <nav>
-        <Link to="/login">
-          로그인
-        </Link>
+    <Routes>
+      <Route 
+        path="/login" 
+        element={token ? <Navigate to="/search" replace /> : <LoginPage setToken={setToken} />} 
+      />
 
-        {" | "}
-
-        <Link to="/signup">
-          회원가입
-        </Link>
-      </nav>
-
-      <Routes>
-        <Route
-          path="/login"
-          element={<LoginPage />}
+      <Route element={<MainLayout token={token} setToken={setToken} />}>
+        <Route 
+          path="/search" 
+          element={token ? <SearchPage token={token} /> : <Navigate to="/login" replace />} 
         />
+      </Route>
 
-        <Route
-          path="/signup"
-          element={<SignupPage />}
-        />
-      </Routes>
-    </>
+      <Route 
+        path="*" 
+        element={token ? <Navigate to="/search" replace /> : <Navigate to="/login" replace />} 
+      />
+    </Routes>
   );
 }
-
-export default App;
