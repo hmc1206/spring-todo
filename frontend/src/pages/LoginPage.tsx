@@ -1,4 +1,6 @@
-import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
+import { GoogleLogin } from "@react-oauth/google";
+// verbatimModuleSyntax 대응을 위한 타입 전용 임포트
+import type { CredentialResponse } from "@react-oauth/google"; 
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -11,33 +13,30 @@ interface LoginPageProps {
 export default function LoginPage({ setToken }: LoginPageProps) {
   const navigate = useNavigate();
 
-  // 📁 frontend/src/pages/LoginPage.tsx 내부 handleGoogleSuccess 수정
-
-    const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     const idToken = credentialResponse.credential;
     if (!idToken) return;
 
     try {
-        // 🔍 백엔드 UserRequestDto의 loginId 필드에 구글 ID 토큰을 실어서 전송합니다!
-        const response = await axios.post(`${API_BASE_URL}/api/users/google`, {
-        loginId: idToken, 
-        password: "",    // 백엔드 파라미터 누락 에러 방지용 공백 주입
-        nickname: ""
-        });
+      // 🔍 백엔드 request.get("token") 스펙에 정확히 맞추어 "token" 키값으로 전송!
+      const response = await axios.post(`${API_BASE_URL}/api/users/google`, {
+        token: idToken, 
+      });
 
-        const jwtToken = response.data.token || response.data.accessToken;
-        if (jwtToken) {
+      // 🔍 백엔드가 반환하는 Map.of("accessToken", jwtToken) 스펙에 맞춰 수신!
+      const jwtToken = response.data.accessToken;
+      
+      if (jwtToken) {
         localStorage.setItem("token", jwtToken);
         setToken(jwtToken);
         alert("성공적으로 로그인되었습니다!");
-        navigate("/search"); // 🏠 QueryDSL 동적 검색 페이지로 진입!
-        }
+        navigate("/search"); // 🏠 인증 성공 즉시 QueryDSL 동적 검색 페이지로 진입
+      }
     } catch (error: any) {
-        console.error("백엔드 인증 실패:", error);
-        alert("인증 실패: " + (error.response?.data?.message || error.message));
+      console.error("백엔드 인증 실패:", error);
+      alert("인증 실패: " + (error.response?.data?.error || error.message));
     }
-    };
-
+  };
 
   return (
     <div style={{ textAlign: "center", marginTop: "50px" }}>
