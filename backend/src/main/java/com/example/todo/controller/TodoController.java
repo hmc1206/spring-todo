@@ -21,7 +21,7 @@ public class TodoController {
     @PostMapping
     public Long createTodo(@Valid @RequestBody TodoRequestDto dto, @AuthenticationPrincipal UserDetails userDetails){
         String loginId = userDetails.getUsername();
-        return todoService.saveWithKoginId(dto,loginId);
+        return todoService.saveWithLoginId(dto,loginId);
     }
 
     @GetMapping

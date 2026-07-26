@@ -20,7 +20,10 @@ public class DiaryController {
     private final DiaryService diaryService;
 
     @PostMapping
-    public Long createDiary(@Valid @RequestBody DiaryRequestDto dto) { return diaryService.save(dto);}
+    public Long createDiary(@Valid @RequestBody DiaryRequestDto dto, @AuthenticationPrincipal UserDetails userDetails) {
+        String loginId = userDetails.getUsername();
+        return diaryService.saveWithLoginId(dto,loginId);
+    }
 
     @GetMapping
     public List<DiaryResponseDto> getAllDiary() {
