@@ -18,6 +18,4 @@ public class DiaryRequestDto {
     @NotNull(message = "다이어리 날짜는 필수 있니다.")
     private LocalDate date;
     private String emotion;
-    @NotNull(message = "유저Id는 필수입니다.")
-    private Long userId;
 }
