@@ -21,8 +21,8 @@ public class DiaryService {
     private final UserRepository userRepository;
 
     @Transactional // 💡 DB 쓰기 작업이므로 덮어쓰기 선언
-    public Long save(DiaryRequestDto dto) {
-        User user = userRepository.findById(dto.getUserId())
+    public Long saveWithLoginId(DiaryRequestDto dto, String loginId) {
+        User user = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
 
         Diary diary = Diary.builder()
