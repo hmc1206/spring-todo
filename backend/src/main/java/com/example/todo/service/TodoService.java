@@ -21,9 +21,9 @@ public class TodoService {
     private final UserRepository userRepository;
 
     @Transactional // 💡 쓰기 작업은 덮어쓰기 필수
-    public Long save(TodoRequestDto dto){
+    public Long saveWithLoginId(TodoRequestDto dto,String loginId){
         //1. dto에 담긴 userId로 진짜 회원 엔티티를 찾음
-        User user = userRepository.findById(dto.getUserId())
+        User user = userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않은 유저입니다."));
 
         Todo todo = Todo.builder()
