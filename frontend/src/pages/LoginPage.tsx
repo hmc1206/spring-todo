@@ -46,9 +46,9 @@ export default function LoginPage({ setToken }: LoginPageProps) {
         <GoogleLogin 
           onSuccess={handleGoogleSuccess} 
           onError={() => alert("구글 로그인 실패")} 
-          useOneTap
         />
       </div>
     </div>
   );
 }
+
