@@ -16,7 +16,4 @@ public class TodoRequestDto {
 
     @NotNull(message = "목표 날짜는 필수 있니다.")
     private LocalDate date;
-
-    @NotNull(message = "유저 ID는 필수입니다.")
-    private Long userId;
 }
