@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:8080";
+// 🛠️ Vite 환경 변수 격리 설계 반영
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
 interface SearchPageProps {
   token: string;
 }
 
-// 백엔드 QueryDSL 검색 결과 DTO 구조에 맞춘 타입 선언
 interface TodoSearchResponse {
   id: number;
-  type: "TODO" | "DIARY"; // 할 일인지 다이어리인지 구분값
+  type: "TODO" | "DIARY"; 
   title: string;
   content: string;
   createdAt: string;
+  isCompleted?: boolean; // 할 일 완료 상태 토글용 확장
 }
 
 export default function SearchPage({ token }: SearchPageProps) {
@@ -26,15 +27,15 @@ export default function SearchPage({ token }: SearchPageProps) {
   const [dataType, setDataType] = useState<"TODO" | "DIARY">("TODO");
   const [title, setTitle] = useState<string>("");
   const [content, setContent] = useState<string>("");
-  const [emotion, setEmotion] = useState<string>("HAPPY"); // 다이어리용 기본 감정값
+  const [emotion, setEmotion] = useState<string>("HAPPY"); 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  // 컴포넌트 마운트 시 최초 1회 전체 데이터를 불러오기 위한 이펙트
+  // 최초 전체 데이터 로드
   useEffect(() => {
     fetchData();
   }, []);
 
-  // 오늘 날짜를 YYYY-MM-DD 포맷의 문자열로 추출 (백엔드 LocalDate 매핑용)
+  // 오늘 날짜 포맷팅 (YYYY-MM-DD)
   const getTodayDateString = () => {
     const today = new Date();
     const year = today.getFullYear();
@@ -43,65 +44,83 @@ export default function SearchPage({ token }: SearchPageProps) {
     return `${year}-${month}-${day}`;
   };
 
-  // 1. [정석 아키텍처 반영] 데이터 추가(등록) 함수
+  // [POST] 데이터 안전 등록 함수 (보안 강화)
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!content.trim()) {
-      alert("내용을 입력해 주세요.");
-      return;
-    }
-    if (dataType === "DIARY" && !title.trim()) {
-      alert("다이어리 제목을 입력해 주세요.");
-      return;
-    }
+    if (!content.trim()) return alert("내용을 입력해 주세요.");
+    if (dataType === "DIARY" && !title.trim()) return alert("다이어리 제목을 입력해 주세요.");
 
     setIsSubmitting(true);
     try {
       const todayDate = getTodayDateString();
       const targetUrl = dataType === "TODO" ? `${API_BASE_URL}/api/todos` : `${API_BASE_URL}/api/diaries`;
       
-      // 🔍 [보안 고도화] 더 이상 요청 바디(RequestBody)에 위조 위험이 있는 수동 userId를 싣지 않습니다.
-      let requestBody = {};
+      const requestBody = dataType === "TODO" 
+        ? { content, date: todayDate } 
+        : { title, content, date: todayDate, emotion };
 
-      if (dataType === "TODO") {
-        // 🟩 TodoRequestDto 규격 매싱 (content, date 필수 / userId 탈락)
-        requestBody = {
-          content: content,
-          date: todayDate,
-        };
-      } else {
-        // 🟦 DiaryRequestDto 규격 매싱 (title, content, date 필수, emotion 선택 / userId 탈락)
-        requestBody = {
-          title: title,
-          content: content,
-          date: todayDate,
-          emotion: emotion,
-        };
-      }
-
-      // 🔍 오직 Authorization 헤더의 JWT(token)만 믿고 백엔드로 전송합니다.
       await axios.post(targetUrl, requestBody, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      alert(`${dataType === "TODO" ? "할 일" : "다이어리"}이(가) 안전한 토큰 인증을 거쳐 등록되었습니다!`);
-      
-      // 입력 폼 초기화
+      alert(`${dataType === "TODO" ? "할 일" : "다이어리"}이(가) 등록되었습니다!`);
       setTitle("");
       setContent("");
-      
-      // 등록 완료 후 실시간 리스트 갱신
       fetchData();
     } catch (error: any) {
-      console.error("데이터 추가 실패:", error);
       alert("등록 실패: " + (error.response?.data?.message || error.message));
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // 2. QueryDSL 동적 검색 및 리스트 조회 함수
+  // 🔄 [미션 1] [PATCH] 할 일 완료 상태 반전 토글 함수
+  const handleToggleTodoComplete = async (id: number) => {
+    try {
+      await axios.patch(`${API_BASE_URL}/api/todos/${id}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // 상태 목록에서 해당 아이템만 찾아 실시간 반전 (불변성 유지)
+      setSearchResults((prev) =>
+        prev.map((item) =>
+          item.type === "TODO" && item.id === id ? { ...item, isCompleted: !item.isCompleted } : item
+        )
+      );
+    } catch (error: any) {
+      alert("상태 변경 실패: " + (error.response?.data?.message || error.message));
+    }
+  };
+
+  // [DELETE] 할 일 삭제 함수
+  const handleDeleteTodo = async (id: number) => {
+    if (!window.confirm("이 할 일을 정말 삭제하시겠습니까?")) return;
+    try {
+      await axios.delete(`${API_BASE_URL}/api/todos/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      alert("성공적으로 삭제되었습니다.");
+      fetchData();
+    } catch (error: any) {
+      alert("삭제 실패: " + (error.response?.data?.message || error.message));
+    }
+  };
+
+  // 🗑️ [미션 2] [DELETE] 다이어리 삭제 함수
+  const handleDeleteDiary = async (id: number) => {
+    if (!window.confirm("이 다이어리를 정말 삭제하시겠습니까?")) return;
+    try {
+      await axios.delete(`${API_BASE_URL}/api/diaries/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      alert("다이어리가 성공적으로 삭제되었습니다.");
+      fetchData();
+    } catch (error: any) {
+      alert("삭제 실패: " + (error.response?.data?.message || error.message));
+    }
+  };
+
+  // [GET] QueryDSL 동적 통합 검색 함수
   const fetchData = async () => {
     setIsLoading(true);
     try {
@@ -122,17 +141,17 @@ export default function SearchPage({ token }: SearchPageProps) {
     fetchData();
   };
 
-  return (
+
+    return (
     <div style={{ display: "flex", flexDirection: "column", gap: "25px" }}>
       
-      {/* ➕ [PART 1] 백엔드 DTO 최적화 및 JWT 토큰 기반 입력 패널 */}
+      {/* ➕ [PART 1] 데이터 등록 패널 */}
       <fieldset style={{ padding: "20px", borderRadius: "8px", border: "1px solid #007bff", background: "#f4f9ff" }}>
         <legend style={{ fontWeight: "bold", fontSize: "1.1rem", padding: "0 10px", color: "#007bff" }}>
           ➕ 새 데이터 추가하기 (보안 연동)
         </legend>
         
         <form onSubmit={handleCreate} style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "10px" }}>
-          {/* 타입 선택 라디오 버튼 */}
           <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
             <label style={{ fontSize: "14px", fontWeight: "bold" }}>종류 선택 :</label>
             <label style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "5px" }}>
@@ -145,7 +164,6 @@ export default function SearchPage({ token }: SearchPageProps) {
             </label>
           </div>
 
-          {/* 제목 입력 - 다이어리(DIARY)일 때만 활성화 (Todo는 title 필드가 없으므로 차단) */}
           {dataType === "DIARY" && (
             <input
               type="text"
@@ -156,7 +174,6 @@ export default function SearchPage({ token }: SearchPageProps) {
             />
           )}
 
-          {/* 내용 입력 */}
           <textarea
             placeholder={dataType === "TODO" ? "오늘의 할 일 내용을 입력하세요..." : "오늘의 일기 내용을 입력하세요..."}
             value={content}
@@ -165,7 +182,6 @@ export default function SearchPage({ token }: SearchPageProps) {
             style={{ padding: "10px", borderRadius: "4px", border: "1px solid #ccc", fontSize: "14px", resize: "none", fontFamily: "sans-serif" }}
           />
 
-          {/* 다이어리일 때만 노출되는 감정 선택(Emotion) UI */}
           {dataType === "DIARY" && (
             <div style={{ display: "flex", gap: "10px", alignItems: "center", fontSize: "14px" }}>
               <label style={{ fontWeight: "bold" }}>오늘의 감정:</label>
@@ -177,7 +193,6 @@ export default function SearchPage({ token }: SearchPageProps) {
             </div>
           )}
 
-          {/* 등록 버튼 */}
           <button 
             type="submit" 
             disabled={isSubmitting}
@@ -188,7 +203,7 @@ export default function SearchPage({ token }: SearchPageProps) {
         </form>
       </fieldset>
 
-      {/* 🔍 [PART 2] QueryDSL 할 일 / 다이어리 동적 통합 검색 패널 */}
+      {/* 🔍 [PART 2] QueryDSL 동적 통합 검색 결과 패널 */}
       <fieldset style={{ padding: "20px", borderRadius: "8px", border: "1px solid #ccc", background: "#f9f9f9" }}>
         <legend style={{ fontWeight: "bold", fontSize: "1.1rem", padding: "0 10px" }}>
           🔍 QueryDSL 동적 통합 검색
@@ -207,7 +222,6 @@ export default function SearchPage({ token }: SearchPageProps) {
           </button>
         </form>
 
-        {/* 실시간 데이터 바인딩 결과창 */}
         <div style={{ marginTop: "25px" }}>
           <h3 style={{ borderBottom: "2px solid #333", paddingBottom: "5px", marginBottom: "15px" }}>
             검색 결과 ({searchResults.length}건)
@@ -220,40 +234,53 @@ export default function SearchPage({ token }: SearchPageProps) {
           ) : (
             <ul style={{ paddingLeft: "0", listStyle: "none" }}>
               {searchResults.map((item) => (
-                <li 
-                  key={`${item.type}-${item.id}`} 
-                  style={{ 
-                    padding: "12px", 
-                    marginBottom: "10px", 
-                    borderRadius: "6px", 
-                    border: "1px solid #eee", 
-                    background: "#fff",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
-                  }}
-                >
+                <li key={`${item.type}-${item.id}`} style={{ padding: "12px", marginBottom: "10px", borderRadius: "6px", border: "1px solid #eee", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                  
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
-                    <span style={{ 
-                      padding: "3px 8px", 
-                      borderRadius: "4px", 
-                      fontSize: "11px", 
-                      fontWeight: "bold", 
-                      color: "#fff", 
-                      background: item.type === "TODO" ? "#28a745" : "#17a2b8" 
-                    }}>
-                      {item.type === "TODO" ? "할 일" : "다이어리"}
-                    </span>
-                    <span style={{ color: "#aaa", fontSize: "12px" }}>{item.createdAt}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ padding: "3px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: "bold", color: "#fff", background: item.type === "TODO" ? "#28a745" : "#17a2b8" }}>
+                        {item.type === "TODO" ? "할 일" : "다이어리"}
+                      </span>
+                      
+                      {/* [미션 1] 할 일 타입 한정 실시간 완료 토글 체크박스 */}
+                      {item.type === "TODO" && (
+                        <label style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", cursor: "pointer" }}>
+                          <input type="checkbox" checked={!!item.isCompleted} onChange={() => handleToggleTodoComplete(item.id)} />
+                          완료
+                        </label>
+                      )}
+                    </div>
+                    
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <span style={{ color: "#aaa", fontSize: "12px" }}>{item.createdAt}</span>
+                      
+                      {/* [미션 2] 다이어리 삭제 기능 추가 및 다형성 바인딩 처리 */}
+                      <button 
+                        onClick={() => item.type === "TODO" ? handleDeleteTodo(item.id) : handleDeleteDiary(item.id)}
+                        style={{ padding: "3px 8px", background: "#dc3545", color: "#fff", border: "none", borderRadius: "4px", fontSize: "11px", cursor: "pointer", fontWeight: "bold" }}
+                      >
+                        삭제
+                      </button>
+                    </div>
                   </div>
-                  {/* Todo 타입일 때는 title이 존재하지 않으므로 기본 텍스트 처리 및 안전 렌더링 */}
+
                   <h4 style={{ margin: "5px 0", color: "#333" }}>{item.title || "할 일 상세 내역"}</h4>
-                  <p style={{ margin: "0", color: "#666", fontSize: "14px" }}>{item.content}</p>
+                  
+                  {/* 완료 여부에 따른 동적 취소선/투명도 스타일 매핑 */}
+                  <p style={{ 
+                    margin: "0", color: "#666", fontSize: "14px",
+                    textDecoration: item.type === "TODO" && item.isCompleted ? "line-through" : "none",
+                    opacity: item.type === "TODO" && item.isCompleted ? 0.5 : 1
+                  }}>
+                    {item.content}
+                  </p>
+                  
                 </li>
               ))}
             </ul>
           )}
         </div>
       </fieldset>
-
     </div>
   );
-}
+} // 파일 끝 마감 감싸기
