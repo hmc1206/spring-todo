@@ -1,0 +1,16 @@
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: "381220738369-vt4ro1vba2j0i41svlangn9l8nn3k91m.apps.googleusercontent.com"
+            client-secret: "YOUR_GOOGLE_CLIENT_SECRET"
+            scope:
+              - email
+              - profile
+
+# JWT 토큰 보안 설정 격리 (실무 가동 기준 256비트 이상 랜덤 문자열 권장)
+jwt:
+  secret: "yourCustomSecretKeyMustBeVeryLongAndSecure1234567890"
+  expiration-time: 86400000 # 24시간 (밀리초 단위)

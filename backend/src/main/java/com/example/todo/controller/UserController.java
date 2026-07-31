@@ -7,6 +7,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,7 +23,9 @@ import java.util.Map;
 public class UserController {
     private final UserService userService;
     // 💡 [!] 아까 구글 Cloud 콘솔에서 발급받은 '내 클라이언트 ID' 문자열을 여기에 정확히 붙여넣으세요.
-    private final String GOOGLE_CLIENT_ID = "381220738369-vt4ro1vba2j0i41svlangn9l8nn3k91m.apps.googleusercontent.com";
+    // application-local.yml에 등록한 구글 클라이언트 ID를 동적으로 주입받음
+    @Value("${spring.security.oauth2.client.registration.google.client-id}")
+    private String googleClientId;
 
     /**
      * 🚀 프론트엔드로부터 구글 ID 토큰을 넘겨받아 검증 및 로그인 처리하는 API
@@ -41,7 +44,7 @@ public class UserController {
         try {
             // 1. [공식 가이드 적용] 구글 토큰 검증기 생성
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
-                    .setAudience(Collections.singletonList(GOOGLE_CLIENT_ID))
+                    .setAudience(Collections.singletonList(googleClientId))
                     .build();
 
             // 2. 전달받은 토큰 문자열 검증 실행

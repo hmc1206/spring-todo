@@ -1,0 +1,3 @@
+### Spring Boot Custom Local Profiles ###
+# 구글 ID/PW 및 JWT 암호화 키 격리 대상 파일 차단
+backend/src/main/resources/application-local.yml
