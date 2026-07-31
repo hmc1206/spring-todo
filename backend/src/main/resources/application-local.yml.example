@@ -1,0 +1,19 @@
+# 💡 [안내] 이 파일은 팀 공유용 빈 껍데기 템플릿입니다.
+# 프로젝트를 클론 받으신 후, 이 파일을 복사하여 파일명을 'application-local.yml'로 변경하세요.
+# 그 후 본인의 로컬 구글 클라이언트 ID와 JWT 암호화 키를 채워 넣고 가동하시면 됩니다.
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: "FILL_YOUR_GOOGLE_CLIENT_ID_HERE"
+            client-secret: "FILL_YOUR_GOOGLE_CLIENT_SECRET_HERE"
+            scope:
+              - email
+              - profile
+
+jwt:
+  secret: "FILL_YOUR_LOCAL_JWT_SECRET_KEY_HERE_MIN_256_BITS"
+  expiration-time: 86400000

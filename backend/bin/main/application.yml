@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: spring-todo
+
+  # 🔍 로컬 개발 가동 시 구글 ID와 JWT 키가 담긴 application-local.yml을 자동 결합하는 핵심 스위치
+  profiles:
+    active: local
+    include: local
+
+  # 🗄️ MySQL 데이터베이스 연동 정보 통합 (포트 3306 / todo_db 데이터베이스)
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/todo_db?serverTimezone=Asia/Seoul&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: "1234"
+
+  # 📑 JPA 및 하이버네이트 테이블 자동 생성(update) 및 SQL 포맷 설정
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
